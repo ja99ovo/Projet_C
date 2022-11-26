@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "math.h": "c",
+        "system_error": "c",
+        "random": "c"
+    }
+}
