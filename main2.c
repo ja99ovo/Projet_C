@@ -1,16 +1,4 @@
-/*interface
-
-choisir le fonctionnement
-  1. compresser
-      function 1 : read file (char* file_name) return char* file_content
-      function 2 : compter fréquence (char* file_content) return struct fréq(char caractère, int fois)
-      function 3 : générer l'arbre (struct fréq ) return struct Htree arbre
-      function 4 : générer le tableau de codage (Htree arbre) return tableau
-      function 5 : coder la texte et sauvgarder en txt (char* file_content, Htree arbre) return void
-  2. décompresser
-      indéterminé
-*/
-
+#include <stdbool.h> 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -18,24 +6,83 @@ typedef struct Htree{
   char ch[1];
   int weight;
   char code; 
-  struct Htree *parent_node;
-  struct Htree *child_node_0;
-  struct Htree *child_node_1;
+  struct Htree* parent_node;
+  struct Htree* child_node_0;
+  struct Htree* child_node_1;
 } Htree ;
 
 typedef struct Htable{
   char ch[1];
   char* code;
+  int len_code;
   } Htable;
 
-char* Read_file(char* file_name){
-  char* file_content;
-  //
-  return (file_content);
+int File_len(char* file_name){
+FILE *fp;
+	if ((fp = fopen(file_name, "rb")) == NULL)
+	{
+		exit(0);
+	}
+	fseek(fp, 0, SEEK_END);
+	int fileLen = ftell(fp);
+
+  return fileLen;
 }
 
 
-Htree * Create_tree(Htree HT[],int length,int cycle){
+char* Read_file(char* file_name){
+  FILE *fp;
+	if ((fp = fopen(file_name, "rb")) == NULL)
+	{
+		exit(0);
+	}
+	fseek(fp, 0, SEEK_END);
+	int fileLen = ftell(fp);
+	char *file_content = (char *) malloc(sizeof(char) * (fileLen+1));
+	fseek(fp, 0, SEEK_SET);
+	fread(file_content, fileLen, sizeof(char), fp);
+	fclose(fp);
+
+  file_content[fileLen]='\0';
+  printf("file len:%d\n",fileLen);
+  return file_content;
+}
+
+Htree* cal_freq(char* file_content){
+  Htree* char_list=(Htree*)malloc(sizeof(Htree)*50);
+  for(int i=0;i<50;i++){
+    char_list[i].ch[0]=NULL;
+  }
+  int char_index=0;
+  int ccc=strlen(file_content);
+  for(int i =0;i<strlen(file_content);i++){
+    bool found=false;
+    for(int ii=0;ii<50;ii++){
+      if(char_list[ii].ch[0]==file_content[i]){
+        char_list[ii].weight++;
+        found=true;
+        break;
+      }
+    }
+    if(!found){
+    char_list[char_index].ch[0]=file_content[i];
+    char_list[char_index].weight=1;
+    char_list[char_index].parent_node=NULL;
+    char_list[char_index].child_node_0=NULL;
+    char_list[char_index].child_node_1=NULL;
+    char_list[char_index].code=NULL;
+    char_index++;
+    }
+  }
+
+  Htree* final_char_list=(Htree*)malloc(sizeof(Htree)*char_index);
+  for(int i=0;i<char_index;i++){
+    final_char_list[i]=char_list[i];
+  }
+  return final_char_list;
+}
+
+Htree* Create_tree(Htree HT[],int length,int cycle){
   if(length==1){
     return HT;
   }
@@ -51,7 +98,6 @@ Htree * Create_tree(Htree HT[],int length,int cycle){
       min0=HT[i].weight;
       min0_index=i;
     }
-
   }
   for(int i=0;i<cycle;i++){
     if (HT[i].weight < min1&&HT[i].weight>Hnode_min_0.weight){
@@ -61,8 +107,8 @@ Htree * Create_tree(Htree HT[],int length,int cycle){
     }
   }
 
-    Htree * p_0=&Hnode_min_0;
-    Htree * p_1=&Hnode_min_1;
+    Htree* p_0=&Hnode_min_0;
+    Htree* p_1=&Hnode_min_1;
 
     HT[cycle].child_node_0=&HT[min0_index];
     HT[min0_index].parent_node=&HT[cycle];
@@ -74,44 +120,118 @@ Htree * Create_tree(Htree HT[],int length,int cycle){
     HT[cycle].weight=Hnode_min_1.weight+Hnode_min_0.weight;
     HT[min0_index].weight=INFINITY;
     HT[min1_index].weight=INFINITY;
-    Htree * new_tree = (Htree*)malloc(sizeof(Htree)*(length-1));
+    Htree* new_tree = (Htree*)malloc(sizeof(Htree)*(length-1));
     return Create_tree(HT,length-1,cycle+1);  
 }
 
 
-char* Create_table(Htree *hnode,int cycle,char* code){
+char* Get_code(Htree* hnode,int cycle,char* code){
   if(hnode->parent_node){
     code[cycle]=hnode->code;
-    return Create_table(hnode->parent_node,cycle+1,code);
+    return Get_code(hnode->parent_node,cycle+1,code);
   }
+  code = (char*)realloc(code, cycle+1);
+  code[cycle]='\0';
   return code;
 }
 
-int main(){
-  Htree ht1={'a',50,NULL,NULL, NULL,NULL};
-  Htree ht2={'b',8,NULL,NULL,NULL,NULL};
-  Htree ht3={'c',13,NULL,NULL,NULL,NULL};
-  Htree ht4={'d',3,NULL,NULL,NULL,NULL};
-  Htree ht5={'e',32,NULL,NULL,NULL,NULL};
-  Htree ht6={'f',23,NULL,NULL,NULL,NULL};
-  Htree hts[6]={ht1,ht2,ht3,ht4,ht5,ht6};
-  int length=sizeof(hts)/sizeof(hts[0]);
-  Htree * Hnode_tree = (Htree*)malloc(sizeof(Htree)*(length+length-1));
-  for(int i=0;i<length;i++){
-    Hnode_tree[i]=hts[i];
-  }
-  
 
-  Htree *head=Create_tree(Hnode_tree,length,length);
+Htable* Create_Table(Htree* head,int length){
+  Htable* htable=(Htable*)malloc(sizeof(Htable)*length);
 
-  Htable htable[length];
   for(int i=0;i<length;i++){
+      htable[i].code = (char*)malloc(sizeof(char)*50);
       htable[i].ch[0]=head[i].ch[0];
-      char code[50]={};
-      htable[i].code=Create_table(&head[i],0,&code);
-      printf("%s:%c\n",htable[i].code,htable[i].ch[0]);
-
+      htable[i].code=Get_code(&head[i],0,htable[i].code);
+      int iii=0;
+      while(htable[i].code[iii]!='\0'){
+        iii++;
+      }
+      htable[i].len_code=iii;
+      char code_re[50];
+      for(int iiii=0;iiii<htable[i].len_code;iiii++){
+        code_re[htable[i].len_code-iiii-1]=htable[i].code[iiii];
+      }
+      for(int iiii=0;iiii<htable[i].len_code;iiii++){
+        htable[i].code[iiii]=code_re[iiii];
+      }
+      
+      iii=0;
+      while(htable[i].code[iii]!='\0'){
+        printf("%c",htable[i].code[iii]);
+        iii++;
+      }
+      printf(":%c\n",htable[i].ch[0]);
+      
   }
-  
 
+  return htable;
+}
+
+
+void Encoder(char* file_content,Htable* table,int length){
+
+  while(*file_content>0){
+    for(int i=0;i<length;i++){
+      if(table[i].ch[0]==*file_content){
+        int iii=0;
+        while(table[i].code[iii]!='\0'){
+        printf("%c",table[i].code[iii]);
+        iii++;
+      }
+        file_content++;
+        break;
+      }
+    }
+  }
+}
+
+void Decoder(int length,int nb_char,Htable* table){
+  char* file_content=Read_file("bbb");
+  int index=0;
+  char* code_in=(char*)malloc(sizeof(char)*2);
+  for(int i=0;i<length;i++){
+    
+    code_in[index]=file_content[i];
+    code_in[index+1]='\0';
+    bool found=false;
+    for(int ii=0;ii<nb_char;ii++){
+      bool cccc=table[ii].code==code_in;
+      int dddd=strcmp(code_in,table[ii].code);
+      if(strcmp(code_in,table[ii].code)==0){
+        printf("%c",table[ii].ch[0]);
+        index=0;
+        free(code_in);
+        code_in=(char*)malloc(sizeof(char)*20);
+        found=true;
+        break;
+      }
+    }
+    if(!found){
+      index++;
+      code_in=realloc(code_in,index+2);
+      code_in[index+1]='\0';
+    }
+  }
+
+}
+
+int main(){
+  char* file_content=Read_file("aaa");
+  int len_text=strlen(file_content);
+  Htree* Hnode_tree=cal_freq(file_content);
+  int length=0;
+  for(int i=0;i<50;i++){
+    if(Hnode_tree[i].weight<0){
+      break;
+    }
+    else length++;
+  }
+
+  printf("nb ch:%d\n",length);
+  Htree* head=Create_tree(Hnode_tree,length,length);
+  Htable* table=Create_Table(head,length);
+  Encoder(Read_file("aaa"),table,length);
+  Decoder(File_len("bbb"),length,table);
+  getchar();
 }
