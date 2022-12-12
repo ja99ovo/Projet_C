@@ -30,6 +30,20 @@ FILE *fp;
 }
 
 
+void Write_file(char* file_name,char str){
+    FILE* output_file = fopen(file_name, "a");
+    if (!output_file) {
+        perror("fopen");
+        exit(EXIT_FAILURE);
+    }
+
+    fputc(str, output_file);
+
+    fclose(output_file);
+    exit(EXIT_SUCCESS);
+}
+
+
 char* Read_file(char* file_name){
   FILE *fp;
 	if ((fp = fopen(file_name, "rb")) == NULL)
@@ -44,7 +58,7 @@ char* Read_file(char* file_name){
 	fclose(fp);
 
   file_content[fileLen]='\0';
-  printf("file len:%d\n",fileLen);
+  //printf("file len:%d\n",fileLen);
   return file_content;
 }
 
@@ -78,6 +92,7 @@ Htree* cal_freq(char* file_content){
   Htree* final_char_list=(Htree*)malloc(sizeof(Htree)*char_index);
   for(int i=0;i<char_index;i++){
     final_char_list[i]=char_list[i];
+    printf("%c : %d\n",char_list[i].ch[0],char_list[i].weight);
   }
   return final_char_list;
 }
@@ -170,13 +185,15 @@ Htable* Create_Table(Htree* head,int length){
 
 
 void Encoder(char* file_content,Htable* table,int length){
-
+  FILE* output_file = fopen("bbb","a");
   while(*file_content>0){
     for(int i=0;i<length;i++){
       if(table[i].ch[0]==*file_content){
         int iii=0;
         while(table[i].code[iii]!='\0'){
         printf("%c",table[i].code[iii]);
+        fputc(table[i].code[iii], output_file);
+        //Write_file("bbb",table[i].code[iii]);
         iii++;
       }
         file_content++;
@@ -184,6 +201,9 @@ void Encoder(char* file_content,Htable* table,int length){
       }
     }
   }
+
+  fclose(output_file);
+    printf("\nLength of file compresseé: %d\n",File_len("bbb"));
 }
 
 void Decoder(int length,int nb_char,Htable* table){
@@ -218,6 +238,7 @@ void Decoder(int length,int nb_char,Htable* table){
 
 int main(){
   char* file_content=Read_file("aaa");
+  printf("Length of file origine: %d\n",File_len("aaa"));
   int len_text=strlen(file_content);
   Htree* Hnode_tree=cal_freq(file_content);
   int length=0;
